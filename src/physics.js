@@ -225,7 +225,8 @@ window.Sim = (function () {
     onClick = cb;
     resize();
     boxes = [];
-    pending = (posts || []).slice();
+    // posts arrive newest-first; reverse so the newest drops last (lands on top).
+    pending = (posts || []).slice().reverse();
     spawnTimer = 0;
     last = 0;
     acc = 0;
