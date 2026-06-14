@@ -1,10 +1,12 @@
 /*
  * app.js — hash router + view rendering. Vanilla, no framework.
- * Routes:  #/  → Home (physics sim)   #/about → About Me   #/post/<slug> → a post
+ * Routes:  (no hash) → Home (physics sim)   #about → About Me   #post/<slug> → a post
+ * Home is hash-less so it lives at the bare domain, not domain/#/.
  */
 (function () {
   const appEl = document.getElementById('app');
   const canvas = document.getElementById('sim');
+  const homeTitle = document.getElementById('home-title');
   let posts = null;
 
   async function loadPosts() {
@@ -20,22 +22,24 @@
     });
   }
 
-  function showCanvas(show) {
+  // Toggle the Home chrome (canvas + title) vs the article container.
+  function showHomeChrome(show) {
     canvas.hidden = !show;
+    homeTitle.hidden = !show;
     appEl.hidden = show;
   }
 
   async function showHome() {
     setActiveTab('home');
     appEl.innerHTML = '';
-    showCanvas(true);
+    showHomeChrome(true);
     const p = await loadPosts();
-    Sim.start(canvas, p, (slug) => { location.hash = '#/post/' + encodeURIComponent(slug); });
+    Sim.start(canvas, p, (slug) => { location.hash = 'post/' + encodeURIComponent(slug); });
   }
 
   async function showFragment(url, withBack) {
     Sim.stop();
-    showCanvas(false);
+    showHomeChrome(false);
     let html;
     try {
       const res = await fetch(url);
@@ -44,21 +48,37 @@
     } catch (e) {
       html = '<article class="content"><p>Not found.</p></article>';
     }
-    if (withBack) html += '<p class="back"><a href="#/">← back to home</a></p>';
+    if (withBack) html += '<p class="back"><a href="#" data-home>← back to home</a></p>';
     appEl.innerHTML = html;
-    main().scrollTo(0, 0);
+    document.querySelector('main').scrollTo(0, 0);
   }
 
-  const main = () => document.querySelector('main');
+  // Navigate Home by clearing the hash entirely, so the URL is the bare domain.
+  function goHome() {
+    if (location.hash) history.pushState(null, '', location.pathname + location.search);
+    router();
+  }
 
   function router() {
-    const h = location.hash || '#/';
-    const m = h.match(/^#\/post\/(.+)$/);
-    if (m) { setActiveTab(null); return showFragment('posts/' + decodeURIComponent(m[1]) + '.html', true); }
-    if (h.startsWith('#/about')) { setActiveTab('about'); return showFragment('about.html', false); }
+    const route = location.hash.replace(/^#/, '');
+    if (route.startsWith('post/')) {
+      setActiveTab(null);
+      return showFragment('posts/' + decodeURIComponent(route.slice(5)) + '.html', true);
+    }
+    if (route === 'about') {
+      setActiveTab('about');
+      return showFragment('about.html', false);
+    }
     return showHome();
   }
 
+  // Home nav link and "back to home" links clear the hash instead of leaving a bare "#".
+  document.addEventListener('click', (e) => {
+    const el = e.target.closest('a[data-tab="home"], a[data-home]');
+    if (el) { e.preventDefault(); goHome(); }
+  });
+
   window.addEventListener('hashchange', router);
+  window.addEventListener('popstate', router);
   router();
 })();

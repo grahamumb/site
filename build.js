@@ -100,6 +100,12 @@ if (fs.existsSync(aboutPath)) {
 for (const fn of fs.readdirSync(SRC_DIR)) {
   fs.copyFileSync(path.join(SRC_DIR, fn), path.join(DIST, fn));
 }
+
+// Copy images/ (if present) into dist/images so posts can reference images/<file>.
+const IMAGES_DIR = path.join(ROOT, 'images');
+if (fs.existsSync(IMAGES_DIR)) {
+  fs.cpSync(IMAGES_DIR, path.join(DIST, 'images'), { recursive: true });
+}
 // Disable Jekyll so GitHub Pages serves our files verbatim.
 fs.writeFileSync(path.join(DIST, '.nojekyll'), '');
 

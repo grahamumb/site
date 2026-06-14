@@ -65,6 +65,22 @@ main {
 
 #sim[hidden] { display: none; }
 
+#home-title {
+  position: absolute;
+  top: 18px;
+  left: 0;
+  right: 0;
+  margin: 0;
+  text-align: center;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--muted);
+  pointer-events: none; /* never block clicks on falling boxes */
+  z-index: 1;
+}
+
+#home-title[hidden] { display: none; }
+
 /* ---- Article / about content ---- */
 #app {
   max-width: 760px;
